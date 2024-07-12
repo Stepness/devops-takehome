@@ -21,4 +21,5 @@ provider "azurerm" {
 module "common" {
   source = "../../modules/common"
   env = var.env
+  location = var.location
 }
