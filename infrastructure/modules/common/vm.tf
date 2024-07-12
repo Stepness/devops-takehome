@@ -35,7 +35,7 @@ resource "azurerm_linux_virtual_machine" "this" {
 
 resource "azurerm_public_ip" "this" {
   for_each = local.services
-  
+
   name                = "${var.project}-pip-${each.key}-${var.env}"
   resource_group_name = azurerm_resource_group.this.name
   location            = var.location

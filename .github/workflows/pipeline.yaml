@@ -1,0 +1,46 @@
+on:
+  [workflow_dispatch]
+
+name: Apply infrastructure
+
+jobs:
+  terraform:
+    name: 'Terraform'
+    runs-on: ubuntu-latest
+    env:
+      ARM_CLIENT_ID: ${{ secrets.AZURE_AD_CLIENT_ID }}
+      ARM_CLIENT_SECRET: ${{ secrets.AZURE_AD_CLIENT_SECRET }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      ARM_TENANT_ID: ${{ secrets.AZURE_AD_TENANT_ID }}
+  
+
+    defaults:
+      run:
+          shell: bash
+          working-directory: ./terraform
+
+    steps:
+      
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ env.TF_VERSION }}≤
+
+      - name: Terraform init
+        id: init
+        run: |
+          terraform init
+        working-directory: ./infrastructure/environments/dev
+
+      - name: Terraform plan
+        id: plan
+        run: terraform plan -no-color
+        working-directory: ./infrastructure/environments/dev
+
+      - name: Terraform apply
+        id: apply
+        run: terraform apply -auto-approve
+        working-directory: ./infrastructure/environments/dev
