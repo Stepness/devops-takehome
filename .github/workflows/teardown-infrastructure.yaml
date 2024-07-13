@@ -3,46 +3,55 @@ on:
 
 name: Teardown infrastructure
 
-jobs:
-  terraform:
-    name: 'Terraform'
-    runs-on: ubuntu-latest
-    env:
-      ARM_CLIENT_ID: ${{ secrets.AZURE_AD_CLIENT_ID }}
-      ARM_CLIENT_SECRET: ${{ secrets.AZURE_AD_CLIENT_SECRET }}
-      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      ARM_TENANT_ID: ${{ secrets.AZURE_AD_TENANT_ID }}
-  
+env:
+  ARM_CLIENT_ID: ${{ secrets.AZURE_AD_CLIENT_ID }}
+  ARM_CLIENT_SECRET: ${{ secrets.AZURE_AD_CLIENT_SECRET }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  ARM_TENANT_ID: ${{ secrets.AZURE_AD_TENANT_ID }}
 
+jobs:
+  terraform-dev:
+    name: 'Terraform dev'
+    runs-on: ubuntu-latest
     defaults:
       run:
-          shell: bash
-          working-directory: ./terraform
+        shell: bash
+        working-directory: ./infrastructure/environments/dev
 
     steps:
-      
-      - name: Checkout
-        uses: actions/checkout@v2
+    - name: Checkout
+      uses: actions/checkout@v4
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
 
-      - name: Terraform init dev
-        id: init-dev
-        run: terraform init
-        working-directory: ./infrastructure/environments/dev
+    - name: Terraform init
+      id: init
+      run: terraform init
 
-      - name: Terraform destroy dev
-        id: destroy-dev
-        run: terraform destroy -auto-approve -no-color
-        working-directory: ./infrastructure/environments/dev
+    - name: Terraform destroy
+      id: destroy
+      run: terraform destroy -auto-approve -no-color
 
-      - name: Terraform init prod
-        id: init-prod
-        run: terraform init
+  terraform-prod:
+    name: 'Terraform prod'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
         working-directory: ./infrastructure/environments/prod
 
-      - name: Terraform destroy prod
-        id: destroy-prod
-        run: terraform destroy -auto-approve -no-color
-        working-directory: ./infrastructure/environments/prod
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+
+    - name: Terraform init
+      id: init
+      run: terraform init
+
+    - name: Terraform destroy
+      id: destroy
+      run: terraform destroy -auto-approve -no-color
