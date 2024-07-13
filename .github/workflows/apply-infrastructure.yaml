@@ -1,7 +1,7 @@
 on:
   [workflow_dispatch]
 
-name: Teardown infrastructure
+name: Apply infrastructure
 
 jobs:
   terraform:
@@ -31,10 +31,15 @@ jobs:
         id: init-dev
         run: terraform init
         working-directory: ./infrastructure/environments/dev
-
-      - name: Terraform destroy dev
-        id: destroy-dev
-        run: terraform destroy -auto-approve -no-color
+        
+      - name: Terraform plan dev
+        id: plan-dev
+        run: terraform plan -no-color
+        working-directory: ./infrastructure/environments/dev
+        
+      - name: Terraform apply dev
+        id: apply-dev
+        run: terraform apply -auto-approve
         working-directory: ./infrastructure/environments/dev
 
       - name: Terraform init prod
@@ -42,7 +47,12 @@ jobs:
         run: terraform init
         working-directory: ./infrastructure/environments/prod
 
-      - name: Terraform destroy prod
-        id: destroy-prod
-        run: terraform destroy -auto-approve -no-color
+      - name: Terraform plan prod
+        id: plan-prod
+        run: terraform plan -no-color
+        working-directory: ./infrastructure/environments/prod
+
+      - name: Terraform apply prod
+        id: apply-prod
+        run: terraform apply -auto-approve
         working-directory: ./infrastructure/environments/prod
