@@ -1,0 +1,8 @@
+ncia:
+  hosts:
+    webserver:
+      ansible_host: 52.232.18.86
+      ansible_user: adminuser
+    db:
+      ansible_host: 52.232.22.125
+      ansible_user: adminuser

@@ -1,0 +1,40 @@
+---
+- name: Configure webserver
+  hosts: webserver
+  tasks:
+
+  - name: Install nginx
+    become: yes
+    apt:
+      name: nginx=1.18.0-6ubuntu14.4
+
+  - name: start nginx
+    service:
+      name: nginx
+      state: started
+
+- name: Configure db
+  hosts: db
+  tasks:
+  - name: Add MongoDB repository GPG key
+    become: yes
+    apt_key:
+      url: https://www.mongodb.org/static/pgp/server-7.0.asc
+      keyring: /usr/share/keyrings/mongodb-server-7.0.gpg
+
+  - name: Add apt repository
+    become: yes
+    apt_repository: 
+      repo: deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse
+      filename: /etc/apt/sources.list.d/mongodb-org-7.0.list
+  
+  - name: Install mongodb
+    become: yes
+    apt:
+      name: 
+      - mongodb-org=7.0.12 
+      - mongodb-org-database=7.0.12 
+      - mongodb-org-server=7.0.12
+      - mongodb-mongosh=2.2.12
+      - mongodb-org-mongos=7.0.12
+      - mongodb-org-tools=7.0.12
