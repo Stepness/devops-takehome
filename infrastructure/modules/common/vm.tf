@@ -39,7 +39,7 @@ resource "azurerm_public_ip" "this" {
   name                = "${var.project}-pip-${each.key}-${var.env}"
   resource_group_name = azurerm_resource_group.this.name
   location            = var.location
-  allocation_method   = "Dynamic"
+  allocation_method   = "Static"
 }
 
 resource "azurerm_network_interface" "this" {
