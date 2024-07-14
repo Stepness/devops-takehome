@@ -46,4 +46,6 @@
       state: restarted
 
   - name: Fill mongo with fake data
+    retries: 3
+    delay: 3
     script: ./resources/filldb.sh
