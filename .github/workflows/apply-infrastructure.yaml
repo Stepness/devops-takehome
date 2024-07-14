@@ -63,10 +63,20 @@ jobs:
       run:
         shell: bash
     steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    
     - name: Install ssh key
       run: |
         mkdir -p ~/.ssh/
         echo -e "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
         sudo chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -t rsa 52.232.43.244 >> ~/.ssh/known_hosts
+        ssh-keyscan -t rsa 52.178.79.182 >> ~/.ssh/known_hosts
+
     - name: Install ansible
       run: python3 -m pip install ansible
+    
+    - name: Run playbook
+      run: ansible-playbook --private-key ~/.ssh/id_rsa -i inventory.yaml playbook.yaml
+      working-directory: ./playbooks
