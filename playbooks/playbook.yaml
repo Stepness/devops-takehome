@@ -3,7 +3,6 @@
   hosts: webserver
   tasks:
 
-
 - name: Configure db
   hosts: db
   tasks:

@@ -54,3 +54,19 @@ jobs:
     - name: Terraform apply
       id: apply
       run: terraform apply -auto-approve
+
+  ansible-dev:
+    name: Ansible dev
+    needs: terraform-dev
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+    - name: Install ssh key
+      run: |
+        mkdir -p ~/.ssh/
+        echo -e "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        sudo chmod 600 ~/.ssh/id_rsa
+    - name: Install ansible
+      run: python3 -m pip install ansible
