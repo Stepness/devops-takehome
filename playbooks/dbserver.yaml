@@ -33,7 +33,9 @@
       regexp: '^ *bindIp:.*'
       line: '  bindIp: 0.0.0.0'
       state: present
-    notify: Start mongo
+    notify: 
+    - Start mongo
+    - Fill mongo with fake data
 
   handlers:
   - name: Start mongo
@@ -42,3 +44,6 @@
       name: mongod
       enabled: yes
       state: restarted
+
+  - name: Fill mongo with fake data
+    script: ./resources/filldb.sh

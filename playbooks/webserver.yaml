@@ -2,6 +2,7 @@
 - name: Configure webserver
   hosts: webserver
   tasks:
+
   - name: Install pip
     become: yes
     apt:
@@ -24,6 +25,11 @@
       path: /opt/app
       state: directory
       owner: adminuser
+  
+  - name: Set database ip configuration
+    template:
+      src: ./resources/config.j2
+      dest: /opt/app/config
   
   - name: Reload systemd
     become: yes
