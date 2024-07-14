@@ -3,96 +3,17 @@ on:
 
 name: Apply infrastructure
 
-env:
-  ARM_CLIENT_ID: ${{ secrets.AZURE_AD_CLIENT_ID }}
-  ARM_CLIENT_SECRET: ${{ secrets.AZURE_AD_CLIENT_SECRET }}
-  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-  ARM_TENANT_ID: ${{ secrets.AZURE_AD_TENANT_ID }}
-
 jobs:
-  terraform-dev:
-    name: 'Terraform dev'
-    runs-on: ubuntu-latest
-    outputs:
-      DbPublicIp: ${{ steps.output.outputs.db_public_ip }}
-      WebserverPublicIp: ${{ steps.output.outputs.webserver_public_ip }}
-    defaults:
-      run:
-        shell: bash
-        working-directory: ./infrastructure/environments/dev
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+  infrastructure-dev:
+    name: Dev
+    uses: ./.github/workflows/deploy.yaml
+    with:
+      environment: dev
+    secrets: inherit
 
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v3
-      with:
-        terraform_wrapper: false
-
-    - name: Terraform init
-      id: init
-      run: terraform init
-      
-    - name: Terraform apply
-      id: apply
-      run: terraform apply -auto-approve
-
-    - name: Terraform output
-      id: output
-      run: |
-        echo "db_public_ip=$(terraform output -raw db_public_ip)" >> "$GITHUB_OUTPUT"
-        echo "webserver_public_ip=$(terraform output -raw webserver_public_ip)" >> "$GITHUB_OUTPUT"
-
-  terraform-prod:
-    name: 'Terraform prod'
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash
-        working-directory: ./infrastructure/environments/prod
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v3
-
-    - name: Terraform init
-      id: init
-      run: terraform init
-
-    - name: Terraform apply
-      id: apply
-      run: terraform apply -auto-approve
-
-  ansible-dev:
-    name: Ansible dev
-    needs: terraform-dev
-    runs-on: ubuntu-latest
-    env: 
-      DbPublicIp: ${{needs.terraform-dev.outputs.DbPublicIp}}
-      WebserverPublicIp: ${{needs.terraform-dev.outputs.WebserverPublicIp}}
-    defaults:
-      run:
-        shell: bash
-    steps:
-    - name: Debug public ips
-      run: echo "$DbPublicIp $WebserverPublicIp"
-
-    - name: Checkout
-      uses: actions/checkout@v4
-    
-    - name: Install ssh key
-      run: |
-        mkdir -p ~/.ssh/
-        echo -e "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-        sudo chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan -t rsa $DbPublicIp >> ~/.ssh/known_hosts
-        ssh-keyscan -t rsa $WebserverPublicIp >> ~/.ssh/known_hosts
-
-    - name: Install ansible
-      run: python3 -m pip install ansible
-    
-    - name: Run playbook
-      run: ansible-playbook --private-key ~/.ssh/id_rsa -i inventory.yaml playbook.yaml -e "db_host=$DbPublicIp webserver_host=$WebserverPublicIp"
-      working-directory: ./playbooks
+  infrastructure-prod:
+    name: Prod
+    uses: ./.github/workflows/deploy.yaml
+    with:
+      environment: prod
+    secrets: inherit
