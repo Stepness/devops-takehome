@@ -5,6 +5,7 @@ variable "env" {
 variable "location" {
   default = "West Europe"
 }
+
 variable "project" {
   default = "devops-ncia"
 }

@@ -3,15 +3,6 @@
   hosts: webserver
   tasks:
 
-  - name: Install nginx
-    become: yes
-    apt:
-      name: nginx=1.18.0-6ubuntu14.4
-
-  - name: start nginx
-    service:
-      name: nginx
-      state: started
 
 - name: Configure db
   hosts: db
@@ -38,3 +29,20 @@
       - mongodb-mongosh=2.2.12
       - mongodb-org-mongos=7.0.12
       - mongodb-org-tools=7.0.12
+  
+  - name: Enable remote mongo connection
+    become: yes
+    lineinfile:
+      path: /etc/mongod.conf
+      regexp: '^ *bindIp:.*'
+      line: '  bindIp: 0.0.0.0'
+      state: present
+    notify: Start mongo
+
+  handlers:
+  - name: Start mongo
+    become: yes
+    systemd:
+      name: mongod
+      enabled: yes
+      state: restarted
