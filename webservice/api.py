@@ -2,11 +2,14 @@ from flask import Flask, jsonify
 from pymongo import MongoClient
 from bson import json_util
 import json
-import os
+import configparser
 
 app = Flask(__name__)
 
-MONGO_HOST = os.environ['DBSERVER_IP']
+config = configparser.RawConfigParser()   
+config.read("/opt/app/config")
+
+MONGO_HOST = config.get("Database", 'DBSERVER_IP')
 MONGO_PORT = 27017
 MONGO_DB = 'nciadb'
 MONGO_COLLECTION = 'fakeCollection'
