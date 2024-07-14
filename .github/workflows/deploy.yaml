@@ -47,7 +47,6 @@ jobs:
         echo "db_public_ip=$(terraform output -raw db_public_ip)" >> "$GITHUB_OUTPUT"
         echo "webserver_public_ip=$(terraform output -raw webserver_public_ip)" >> "$GITHUB_OUTPUT"
 
-  
   ansible:
     name: Ansible
     needs: terraform
@@ -79,3 +78,31 @@ jobs:
     - name: Run playbook
       run: ansible-playbook --private-key ~/.ssh/id_rsa -i inventory.yaml playbook.yaml -e "db_host=$DbPublicIp webserver_host=$WebserverPublicIp"
       working-directory: ./playbooks
+
+  webservice:
+    name: Deploy Web Service
+    needs: [ansible, terraform]
+    runs-on: ubuntu-latest
+    env: 
+      WebserverPublicIp: ${{needs.terraform.outputs.WebserverPublicIp}}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    
+    - name: Install ssh key
+      run: |
+        mkdir -p ~/.ssh/
+        echo -e "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        sudo chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -t rsa $WebserverPublicIp >> ~/.ssh/known_hosts
+
+    - name: Deploy application
+      run: |
+        ssh -i ~/.ssh/id_rsa adminuser@$WebserverPublicIp "mkdir -p /opt/app/"
+        scp -i ~/.ssh/id_rsa -r ./webservice/* adminuser@$WebserverPublicIp:/opt/app/
+    
+    - name: Install requirements
+      run: ssh -i ~/.ssh/id_rsa adminuser@$WebserverPublicIp "pip install -r /opt/app/requirements.txt"
+
+    - name: Run service
+      run: ssh -i ~/.ssh/id_rsa adminuser@$WebserverPublicIp "sudo service flask restart"
