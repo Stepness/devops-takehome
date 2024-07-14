@@ -1,8 +1,8 @@
 ncia:
   hosts:
     webserver:
-      ansible_host: 52.232.43.244
+      ansible_host: "{{ webserver_host }}"
       ansible_user: adminuser
     db:
-      ansible_host: 52.178.79.182
+      ansible_host: "{{ db_host }}"
       ansible_user: adminuser

@@ -13,6 +13,9 @@ jobs:
   terraform-dev:
     name: 'Terraform dev'
     runs-on: ubuntu-latest
+    outputs:
+      DbPublicIp: ${{ steps.output.outputs.db_public_ip }}
+      WebserverPublicIp: ${{ steps.output.outputs.webserver_public_ip }}
     defaults:
       run:
         shell: bash
@@ -23,6 +26,8 @@ jobs:
 
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_wrapper: false
 
     - name: Terraform init
       id: init
@@ -32,6 +37,11 @@ jobs:
       id: apply
       run: terraform apply -auto-approve
 
+    - name: Terraform output
+      id: output
+      run: |
+        echo "db_public_ip=$(terraform output -raw db_public_ip)" >> "$GITHUB_OUTPUT"
+        echo "webserver_public_ip=$(terraform output -raw webserver_public_ip)" >> "$GITHUB_OUTPUT"
 
   terraform-prod:
     name: 'Terraform prod'
@@ -59,10 +69,16 @@ jobs:
     name: Ansible dev
     needs: terraform-dev
     runs-on: ubuntu-latest
+    env: 
+      DbPublicIp: ${{needs.terraform-dev.outputs.DbPublicIp}}
+      WebserverPublicIp: ${{needs.terraform-dev.outputs.WebserverPublicIp}}
     defaults:
       run:
         shell: bash
     steps:
+    - name: Debug public ips
+      run: echo "$DbPublicIp $WebserverPublicIp"
+
     - name: Checkout
       uses: actions/checkout@v4
     
@@ -71,12 +87,12 @@ jobs:
         mkdir -p ~/.ssh/
         echo -e "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
         sudo chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan -t rsa 52.232.43.244 >> ~/.ssh/known_hosts
-        ssh-keyscan -t rsa 52.178.79.182 >> ~/.ssh/known_hosts
+        ssh-keyscan -t rsa $DbPublicIp >> ~/.ssh/known_hosts
+        ssh-keyscan -t rsa $WebserverPublicIp >> ~/.ssh/known_hosts
 
     - name: Install ansible
       run: python3 -m pip install ansible
     
     - name: Run playbook
-      run: ansible-playbook --private-key ~/.ssh/id_rsa -i inventory.yaml playbook.yaml
+      run: ansible-playbook --private-key ~/.ssh/id_rsa -i inventory.yaml playbook.yaml -e "db_host=$DbPublicIp webserver_host=$WebserverPublicIp"
       working-directory: ./playbooks
