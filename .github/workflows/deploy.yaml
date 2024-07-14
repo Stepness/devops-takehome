@@ -22,7 +22,6 @@ jobs:
       WebserverPublicIp: ${{ steps.output.outputs.webserver_public_ip }}
     defaults:
       run:
-        shell: bash
         working-directory: ./infrastructure/environments/${{ inputs.environment }}
     steps:
     - name: Checkout
@@ -54,9 +53,6 @@ jobs:
     env: 
       DbPublicIp: ${{needs.terraform.outputs.DbPublicIp}}
       WebserverPublicIp: ${{needs.terraform.outputs.WebserverPublicIp}}
-    defaults:
-      run:
-        shell: bash
     steps:
     - name: Debug public ips
       run: echo "$DbPublicIp $WebserverPublicIp"
@@ -104,3 +100,20 @@ jobs:
 
     - name: Run service
       run: ssh -i ~/.ssh/id_rsa adminuser@$WebserverPublicIp "sudo service flask restart"
+  
+  test:
+    name: Test Web Service
+    needs: [webservice, terraform]
+    runs-on: ubuntu-latest
+    env: 
+      WebserverPublicIp: ${{needs.terraform.outputs.WebserverPublicIp}}
+    steps:
+    - name: Run HTTP request
+      run: |
+        curl -I $WebserverPublicIp/fakedata
+        
+        http_status=$(curl -o /dev/null -s -w "%{http_code}\n" $WebserverPublicIp/fakedata)
+
+        if [ "$http_status" -ne 200 ]; then
+          exit 1
+        fi
